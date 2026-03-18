@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SET Universe — Chris Marchese Digital World</title>
+  <meta name="description" content="Step into Chris Marchese's immersive 3D world. Capital, Art, Fashion — all walkable." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;overflow:hidden;background:#050505}
+    canvas{display:block}
+    #app{width:100%;height:100%;position:relative}
+    #loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#050505;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.2s ease,visibility 1.2s ease}
+    #loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+    #loading-logo{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:#C5A55A;letter-spacing:.15em;margin-bottom:2rem;text-transform:uppercase}
+    #loading-logo span{color:#F5F0E8}
+    #loading-bar-container{width:300px;height:2px;background:rgba(197,165,90,.15);border-radius:1px;overflow:hidden}
+    #loading-bar{width:0%;height:100%;background:linear-gradient(90deg,#C5A55A,#FFD700);transition:width .3s ease}
+    #loading-percent{font-family:'Outfit',sans-serif;font-size:.85rem;color:rgba(245,240,232,.5);margin-top:1rem;letter-spacing:.3em}
+    #start-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,5,5,.7);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(5px)}
+    #start-overlay.hidden{display:none}
+    #start-overlay h2{font-family:'Playfair Display',serif;font-size:2rem;color:#C5A55A;margin-bottom:1rem}
+    #start-overlay p{font-family:'Outfit',sans-serif;color:rgba(245,240,232,.6);font-size:.9rem;letter-spacing:.1em}
+    #crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;z-index:100;pointer-events:none;opacity:.4}
+    #crosshair::before,#crosshair::after{content:'';position:absolute;background:#C5A55A}
+    #crosshair::before{width:2px;height:20px;left:9px;top:0}
+    #crosshair::after{width:20px;height:2px;left:0;top:9px}
+    #hud{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:100;pointer-events:none;font-family:'Outfit',sans-serif}
+    #interaction-prompt{background:rgba(10,22,40,.85);border:1px solid rgba(197,165,90,.3);color:#F5F0E8;padding:.75rem 1.5rem;border-radius:8px;font-size:.85rem;letter-spacing:.05em;backdrop-filter:blur(10px);opacity:0;transition:opacity .3s ease}
+    #interaction-prompt.visible{opacity:1}
+    #room-label{position:fixed;top:2rem;left:50%;transform:translateX(-50%);z-index:100;font-family:'Playfair Display',serif;font-size:1.1rem;color:rgba(197,165,90,.7);letter-spacing:.2em;text-transform:uppercase;pointer-events:none;opacity:0;transition:opacity .5s ease}
+    #room-label.visible{opacity:1}
+    #info-panel{position:fixed;top:50%;right:2rem;transform:translateY(-50%);width:380px;max-height:80vh;z-index:200;background:rgba(10,22,40,.92);border:1px solid rgba(197,165,90,.25);border-radius:12px;padding:2rem;backdrop-filter:blur(20px);color:#F5F0E8;font-family:'Outfit',sans-serif;opacity:0;visibility:hidden;transition:all .4s ease;overflow-y:auto}
+    #info-panel.visible{opacity:1;visibility:visible}
+    #info-panel h3{font-family:'Playfair Display',serif;font-size:1.4rem;color:#C5A55A;margin-bottom:.75rem}
+    #info-panel p{font-size:.9rem;line-height:1.6;color:rgba(245,240,232,.8);margin-bottom:1rem}
+    #info-panel .close-btn{position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(245,240,232,.5);font-size:1.5rem;cursor:pointer}
+    #info-panel .cta-btn{display:inline-block;background:linear-gradient(135deg,#C5A55A,#FFD700);color:#0A1628;padding:.75rem 1.5rem;border-radius:6px;font-weight:600;font-size:.85rem;text-decoration:none;letter-spacing:.05em;cursor:pointer;border:none;transition:transform .2s ease}
+    #info-panel .cta-btn:hover{transform:scale(1.03)}
+    #minimap{position:fixed;bottom:2rem;right:2rem;width:120px;height:120px;background:rgba(10,22,40,.6);border:1px solid rgba(197,165,90,.2);border-radius:8px;z-index:100;display:none}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="loading-screen">
+      <div id="loading-logo">SET <span>UNIVERSE</span></div>
+      <div id="loading-bar-container"><div id="loading-bar"></div></div>
+      <div id="loading-percent">0</div>
+    </div>
+    <div id="start-overlay" class="hidden">
+      <h2>Enter The Universe</h2>
+      <p>CLICK TO BEGIN &mdash; WASD to move &bull; Mouse to orbit</p>
+    </div>
+    <div id="crosshair" style="display:none;"></div>
+    <div id="hud"><div id="interaction-prompt"></div></div>
+    <div id="room-label"></div>
+    <div id="info-panel">
+      <button class="close-btn" onclick="document.getElementById('info-panel').classList.remove('visible')">&times;</button>
+      <h3 id="info-title"></h3>
+      <p id="info-body"></p>
+      <button class="cta-btn" id="info-cta" style="display:none;"></button>
+    </div>
+    <div id="minimap"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
