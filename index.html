@@ -1,70 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SET Universe — Chris Marchese Digital World</title>
-  <meta name="description" content="Step into Chris Marchese's immersive 3D world. Capital, Art, Fashion — all walkable." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;overflow:hidden;background:#050505}
-    canvas{display:block}
-    #app{width:100%;height:100%;position:relative}
-    #loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#050505;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.2s ease,visibility 1.2s ease}
-    #loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-    #loading-logo{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:#C5A55A;letter-spacing:.15em;margin-bottom:2rem;text-transform:uppercase}
-    #loading-logo span{color:#F5F0E8}
-    #loading-bar-container{width:300px;height:2px;background:rgba(197,165,90,.15);border-radius:1px;overflow:hidden}
-    #loading-bar{width:0%;height:100%;background:linear-gradient(90deg,#C5A55A,#FFD700);transition:width .3s ease}
-    #loading-percent{font-family:'Outfit',sans-serif;font-size:.85rem;color:rgba(245,240,232,.5);margin-top:1rem;letter-spacing:.3em}
-    #start-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,5,5,.7);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(5px)}
-    #start-overlay.hidden{display:none}
-    #start-overlay h2{font-family:'Playfair Display',serif;font-size:2rem;color:#C5A55A;margin-bottom:1rem}
-    #start-overlay p{font-family:'Outfit',sans-serif;color:rgba(245,240,232,.6);font-size:.9rem;letter-spacing:.1em}
-    #crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;z-index:100;pointer-events:none;opacity:.4}
-    #crosshair::before,#crosshair::after{content:'';position:absolute;background:#C5A55A}
-    #crosshair::before{width:2px;height:20px;left:9px;top:0}
-    #crosshair::after{width:20px;height:2px;left:0;top:9px}
-    #hud{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:100;pointer-events:none;font-family:'Outfit',sans-serif}
-    #interaction-prompt{background:rgba(10,22,40,.85);border:1px solid rgba(197,165,90,.3);color:#F5F0E8;padding:.75rem 1.5rem;border-radius:8px;font-size:.85rem;letter-spacing:.05em;backdrop-filter:blur(10px);opacity:0;transition:opacity .3s ease}
-    #interaction-prompt.visible{opacity:1}
-    #room-label{position:fixed;top:2rem;left:50%;transform:translateX(-50%);z-index:100;font-family:'Playfair Display',serif;font-size:1.1rem;color:rgba(197,165,90,.7);letter-spacing:.2em;text-transform:uppercase;pointer-events:none;opacity:0;transition:opacity .5s ease}
-    #room-label.visible{opacity:1}
-    #info-panel{position:fixed;top:50%;right:2rem;transform:translateY(-50%);width:380px;max-height:80vh;z-index:200;background:rgba(10,22,40,.92);border:1px solid rgba(197,165,90,.25);border-radius:12px;padding:2rem;backdrop-filter:blur(20px);color:#F5F0E8;font-family:'Outfit',sans-serif;opacity:0;visibility:hidden;transition:all .4s ease;overflow-y:auto}
-    #info-panel.visible{opacity:1;visibility:visible}
-    #info-panel h3{font-family:'Playfair Display',serif;font-size:1.4rem;color:#C5A55A;margin-bottom:.75rem}
-    #info-panel p{font-size:.9rem;line-height:1.6;color:rgba(245,240,232,.8);margin-bottom:1rem}
-    #info-panel .close-btn{position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(245,240,232,.5);font-size:1.5rem;cursor:pointer}
-    #info-panel .cta-btn{display:inline-block;background:linear-gradient(135deg,#C5A55A,#FFD700);color:#0A1628;padding:.75rem 1.5rem;border-radius:6px;font-weight:600;font-size:.85rem;text-decoration:none;letter-spacing:.05em;cursor:pointer;border:none;transition:transform .2s ease}
-    #info-panel .cta-btn:hover{transform:scale(1.03)}
-    #minimap{position:fixed;bottom:2rem;right:2rem;width:120px;height:120px;background:rgba(10,22,40,.6);border:1px solid rgba(197,165,90,.2);border-radius:8px;z-index:100;display:none}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SET Universe — Chris Marchese Digital World</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#050505;font-family:'Outfit',sans-serif}
+canvas{display:block}
+#app{width:100%;height:100%;position:relative}
+#loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#050505;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.2s ease,visibility 1.2s ease}
+#loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#loading-logo{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:900;color:#C5A55A;letter-spacing:.15em;margin-bottom:.5rem;text-transform:uppercase}
+#loading-logo span{color:#F5F0E8}
+#loading-sub{font-size:.7rem;color:rgba(245,240,232,.25);letter-spacing:.4em;margin-bottom:2rem;text-transform:uppercase}
+#loading-bar-container{width:min(300px,60vw);height:2px;background:rgba(197,165,90,.15);overflow:hidden}
+#loading-bar{width:0%;height:100%;background:linear-gradient(90deg,#C5A55A,#FFD700);transition:width .3s}
+#loading-percent{font-size:.85rem;color:rgba(245,240,232,.5);margin-top:1rem;letter-spacing:.3em}
+#start-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,5,5,.65);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px)}
+#start-overlay.show{display:flex}
+#start-overlay h2{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,4vw,2.2rem);color:#C5A55A;margin-bottom:.8rem;letter-spacing:.1em}
+#start-overlay p{color:rgba(245,240,232,.5);font-size:.85rem;letter-spacing:.12em;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+#crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;z-index:100;pointer-events:none;opacity:0;transition:opacity .3s}
+#crosshair.show{opacity:.4}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:#C5A55A}
+#crosshair::before{width:1.5px;height:18px;left:8.25px}
+#crosshair::after{width:18px;height:1.5px;top:8.25px}
+#hud{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:100;pointer-events:none}
+#prompt{background:rgba(10,22,40,.88);border:1px solid rgba(197,165,90,.3);color:#F5F0E8;padding:.6rem 1.4rem;border-radius:8px;font-size:.8rem;letter-spacing:.05em;backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;white-space:nowrap}
+#prompt.vis{opacity:1}
+#rlabel{position:fixed;top:2rem;left:50%;transform:translateX(-50%);z-index:100;font-family:'Playfair Display',serif;font-size:1rem;color:rgba(197,165,90,.6);letter-spacing:.25em;text-transform:uppercase;pointer-events:none;opacity:0;transition:opacity .6s}
+#rlabel.vis{opacity:1}
+#ipanel{position:fixed;top:50%;right:1.5rem;transform:translateY(-50%);width:min(360px,85vw);z-index:200;background:rgba(8,16,32,.93);border:1px solid rgba(197,165,90,.2);border-radius:12px;padding:1.8rem;backdrop-filter:blur(24px);color:#F5F0E8;opacity:0;visibility:hidden;transition:all .4s}
+#ipanel.vis{opacity:1;visibility:visible}
+#ipanel h3{font-family:'Playfair Display',serif;font-size:1.3rem;color:#C5A55A;margin-bottom:.6rem}
+#ipanel p{font-size:.85rem;line-height:1.65;color:rgba(245,240,232,.75);margin-bottom:1rem}
+.cbtn{position:absolute;top:.8rem;right:1rem;background:none;border:none;color:rgba(245,240,232,.4);font-size:1.4rem;cursor:pointer}
+.cta{display:inline-block;background:linear-gradient(135deg,#C5A55A,#FFD700);color:#0A1628;padding:.65rem 1.4rem;border-radius:6px;font-weight:600;font-size:.8rem;cursor:pointer;border:none}
+#hint{position:fixed;bottom:1rem;right:1.5rem;z-index:90;color:rgba(245,240,232,.2);font-size:.6rem;letter-spacing:.1em;pointer-events:none}
+</style>
 </head>
 <body>
-  <div id="app">
-    <div id="loading-screen">
-      <div id="loading-logo">SET <span>UNIVERSE</span></div>
-      <div id="loading-bar-container"><div id="loading-bar"></div></div>
-      <div id="loading-percent">0</div>
-    </div>
-    <div id="start-overlay" class="hidden">
-      <h2>Enter The Universe</h2>
-      <p>CLICK TO BEGIN &mdash; WASD to move &bull; Mouse to orbit</p>
-    </div>
-    <div id="crosshair" style="display:none;"></div>
-    <div id="hud"><div id="interaction-prompt"></div></div>
-    <div id="room-label"></div>
-    <div id="info-panel">
-      <button class="close-btn" onclick="document.getElementById('info-panel').classList.remove('visible')">&times;</button>
-      <h3 id="info-title"></h3>
-      <p id="info-body"></p>
-      <button class="cta-btn" id="info-cta" style="display:none;"></button>
-    </div>
-    <div id="minimap"></div>
-  </div>
-  <script type="module" src="/src/main.js"></script>
+<div id="app">
+<div id="loading-screen"><div id="loading-logo">SET <span>UNIVERSE</span></div><div id="loading-sub">Chris Marchese Digital World</div><div id="loading-bar-container"><div id="loading-bar"></div></div><div id="loading-percent">0</div></div>
+<div id="start-overlay"><h2>Enter The Universe</h2><p>CLICK TO BEGIN — WASD move • Mouse orbit • E interact</p></div>
+<div id="crosshair"></div>
+<div id="hud"><div id="prompt"></div></div>
+<div id="rlabel"></div>
+<div id="ipanel"><button class="cbtn" id="closep">×</button><h3 id="ititle"></h3><p id="ibody"></p><button class="cta" id="icta" style="display:none"></button></div>
+<div id="hint">WASD • MOUSE • SCROLL • E/CLICK</div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import*as T from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';
+const C={GOLD:0xC5A55A,CGOLD:0xFFD700,BLUE:0x0066FF,GREEN:0x00CC66,RED:0xCC0000,CHROME:0xC0C0C0,BLK:0x050505};
+const H={W:30,D:20,H:8},P={SPD:5,SPR:1.8,R:0.4};
+const st={on:false,k:{},ia:[],ch:null,clk:new T.Clock()};
+const sc=new T.Scene();sc.background=new T.Color(C.BLK);sc.fog=new T.FogExp2(C.BLK,0.018);
+const cam=new T.PerspectiveCamera(55,innerWidth/innerHeight,0.1,200);cam.position.set(0,3.5,12);
+const rn=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+rn.setSize(innerWidth,innerHeight);rn.setPixelRatio(Math.min(devicePixelRatio,2));
+rn.shadowMap.enabled=true;rn.shadowMap.type=T.PCFSoftShadowMap;
+rn.toneMapping=T.ACESFilmicToneMapping;rn.toneMappingExposure=1.2;rn.outputColorSpace=T.SRGBColorSpace;
+document.getElementById('app').appendChild(rn.domElement);
+const oc=new OrbitControls(cam,rn.domElement);
+oc.enableDamping=true;oc.dampingFactor=0.08;oc.minDistance=3;oc.maxDistance=12;
+oc.maxPolarAngle=Math.PI*0.48;oc.minPolarAngle=Math.PI*0.15;oc.enablePan=false;oc.enabled=false;
+sc.add(new T.AmbientLight(0x1a1a2e,0.4));
+const kl=new T.DirectionalLight(0xFFF4E0,0.8);kl.position.set(5,12,3);kl.castShadow=true;
+kl.shadow.mapSize.set(2048,2048);kl.shadow.camera.left=-20;kl.shadow.camera.right=20;
+kl.shadow.camera.top=15;kl.shadow.camera.bottom=-15;kl.shadow.bias=-0.0001;sc.add(kl);
+const fl=new T.DirectionalLight(0x8899BB,0.3);fl.position.set(-5,8,-3);sc.add(fl);
+const r1=new T.PointLight(0xC5A55A,0.6,20);r1.position.set(-12,6,-8);sc.add(r1);
+const r2=new T.PointLight(0x4466AA,0.4,20);r2.position.set(12,6,8);sc.add(r2);
+for(let i=0;i<4;i++){const s=new T.SpotLight(0xFFF0D4,1.5,15,Math.PI/8,0.5,1.5);s.position.set(-10+i*6,7,-9.5);s.target.position.set(-10+i*6,1.5,-9.8);s.castShadow=true;s.shadow.mapSize.set(512,512);sc.add(s);sc.add(s.target);}
+const mk=(g,m)=>{const o=new T.Mesh(g,m);return o;};
+const flr=mk(new T.PlaneGeometry(H.W,H.D),new T.MeshStandardMaterial({color:0x1a1a1a,roughness:0.15,metalness:0.1}));flr.rotation.x=-Math.PI/2;flr.receiveShadow=true;sc.add(flr);
+const rf=mk(new T.PlaneGeometry(H.W,H.D),new T.MeshStandardMaterial({color:0x111111,roughness:0.05,metalness:0.3,transparent:true,opacity:0.15}));rf.rotation.x=-Math.PI/2;rf.position.y=0.001;sc.add(rf);
+const gr=new T.GridHelper(H.W,30,0x1a1a22,0x111116);gr.position.y=0.005;gr.material.opacity=0.1;gr.material.transparent=true;sc.add(gr);
+const cl=mk(new T.PlaneGeometry(H.W,H.D),new T.MeshStandardMaterial({color:0x0d0d0d,roughness:0.8}));cl.rotation.x=Math.PI/2;cl.position.y=H.H;sc.add(cl);
+const wm=new T.MeshStandardMaterial({color:0x121218,roughness:0.6});
+const am=new T.MeshStandardMaterial({color:0x0f0f14,roughness:0.5});
+const bw=mk(new T.BoxGeometry(H.W,H.H,0.3),am);bw.position.set(0,H.H/2,-H.D/2);bw.receiveShadow=true;sc.add(bw);
+const fw=mk(new T.BoxGeometry(H.W,H.H,0.3),wm);fw.position.set(0,H.H/2,H.D/2);sc.add(fw);
+[-H.W/2,H.W/2].forEach(x=>{const w=mk(new T.BoxGeometry(0.3,H.H,H.D),wm);w.position.set(x,H.H/2,0);w.receiveShadow=true;sc.add(w);});
+const cg=new T.CylinderGeometry(0.3,0.35,H.H,16),cm=new T.MeshStandardMaterial({color:0x1a1a20,roughness:0.3,metalness:0.15});
+const rg=new T.TorusGeometry(0.38,0.03,8,24),rm=new T.MeshStandardMaterial({color:C.GOLD,roughness:0.2,metalness:0.9});
+[[-10,-6],[-10,6],[10,-6],[10,6],[-5,-6],[-5,6],[5,-6],[5,6]].forEach(([x,z])=>{
+const c=mk(cg,cm);c.position.set(x,H.H/2,z);c.castShadow=true;sc.add(c);
+const r=mk(rg,rm);r.rotation.x=Math.PI/2;r.position.set(x,0.1,z);sc.add(r);
+const t=r.clone();t.position.set(x,H.H-0.1,z);sc.add(t);});
+const fm=new T.MeshStandardMaterial({color:C.GOLD,roughness:0.3,metalness:0.85});
+[-9,-3,3,9].forEach((x,i)=>{
+const f=mk(new T.BoxGeometry(3.5,2.5,0.15),fm);f.position.set(x,3.5,-H.D/2+0.25);f.castShadow=true;sc.add(f);
+const cv=mk(new T.PlaneGeometry(3,2),new T.MeshStandardMaterial({color:new T.Color().setHSL(i*0.22+0.05,0.45,0.22),roughness:0.7}));
+cv.position.set(x,3.5,-H.D/2+0.35);cv.userData={type:'painting',name:'Painting '+(i+1),description:'Original artwork by Chris Marchese.',interactive:true};
+sc.add(cv);st.ia.push(cv);});
+const lm=new T.MeshStandardMaterial({color:0x0a0a0a,roughness:0.85});
+const cs=mk(new T.BoxGeometry(4,0.5,1.5),lm);cs.position.set(8,0.4,4);cs.castShadow=true;sc.add(cs);
+const cb2=mk(new T.BoxGeometry(4,0.8,0.3),lm);cb2.position.set(8,0.9,4.75);sc.add(cb2);
+const c2=mk(new T.BoxGeometry(3,0.5,1.5),lm);c2.position.set(10.5,0.4,1.5);c2.rotation.y=-Math.PI/2;sc.add(c2);
+const tt=mk(new T.BoxGeometry(1.8,0.05,1),new T.MeshStandardMaterial({color:C.GOLD,roughness:0.25,metalness:0.8}));tt.position.set(8,0.55,2.5);sc.add(tt);
+const bg=new T.Group();bg.position.set(-12,0,7);
+const bm=new T.MeshStandardMaterial({color:C.RED,roughness:0.5});
+const bb=mk(new T.BoxGeometry(1.2,2.8,1.2),bm);bb.position.y=1.4;bb.castShadow=true;bg.add(bb);
+const rf2=mk(new T.BoxGeometry(1.4,0.15,1.4),bm);rf2.position.y=2.85;bg.add(rf2);
+const cr=mk(new T.BoxGeometry(0.6,0.3,0.6),bm);cr.position.y=3.1;bg.add(cr);
+const bl=new T.PointLight(0xFFAA44,1.5,5);bl.position.y=2.2;bg.add(bl);
+const gl2=mk(new T.PlaneGeometry(0.9,1.8),new T.MeshStandardMaterial({color:0xFFEECC,transparent:true,opacity:0.15,roughness:0.05}));gl2.position.set(0,1.6,0.61);bg.add(gl2);
+bb.userData={type:'phonebooth',name:'Contact Chris',description:'Pick up the phone to reach Chris Marchese and the SET team.',interactive:true};
+sc.add(bg);st.ia.push(bb);
+const sm=new T.MeshStandardMaterial({color:C.CHROME,roughness:0.2,metalness:0.7});
+const pg=new T.CylinderGeometry(0.5,0.55,1.2,16),pm=new T.MeshStandardMaterial({color:0x1a1a20,roughness:0.4});
+const s1=mk(new T.TorusKnotGeometry(0.6,0.15,100,16,2,3),sm);s1.position.set(-3,1.8,3);s1.castShadow=true;sc.add(s1);
+const p1=mk(pg,pm);p1.position.set(-3,0.6,3);sc.add(p1);
+const s2=mk(new T.IcosahedronGeometry(0.7,0),new T.MeshStandardMaterial({color:C.GOLD,roughness:0.25,metalness:0.9}));
+s2.position.set(3,1.8,5);s2.castShadow=true;s2.userData.animate=t=>{s2.rotation.y=t*0.3;s2.rotation.x=Math.sin(t*0.5)*0.1;};sc.add(s2);
+const p2=mk(pg,pm);p2.position.set(3,0.6,5);sc.add(p2);
+const s3=mk(new T.DodecahedronGeometry(0.5,0),sm);s3.position.set(-7,1.6,-2);s3.castShadow=true;s3.userData.animate=t=>{s3.rotation.y=-t*0.2;};sc.add(s3);
+const p3=mk(pg,pm);p3.position.set(-7,0.5,-2);sc.add(p3);
+const em=mk(new T.RingGeometry(2,2.2,48),new T.MeshStandardMaterial({color:C.GOLD,roughness:0.3,metalness:0.8,transparent:true,opacity:0.15}));
+em.rotation.x=-Math.PI/2;em.position.y=0.01;sc.add(em);
+function pillar(pos,col,label){
+const g=new T.Group();g.position.set(pos.x,0,pos.z);const co=new T.Color(col);
+const ad=(r1,r2,op)=>{const m=new T.MeshBasicMaterial({color:co,transparent:true,opacity:op,side:T.DoubleSide,blending:T.AdditiveBlending,depthWrite:false});const c=new T.Mesh(new T.CylinderGeometry(r1,r2,H.H,16,1,true),m);c.position.y=H.H/2;g.add(c);return m;};
+const bM=ad(0.3,0.3,0.6),gM=ad(1,1.2,0.08);ad(1.8,2.2,0.03);
+const pc=80,pp=new Float32Array(pc*3);for(let i=0;i<pc;i++){const a=Math.random()*6.28,r=Math.random()*0.8;pp[i*3]=Math.cos(a)*r;pp[i*3+1]=Math.random()*H.H;pp[i*3+2]=Math.sin(a)*r;}
+const pG=new T.BufferGeometry();pG.setAttribute('position',new T.BufferAttribute(pp,3));
+g.add(new T.Points(pG,new T.PointsMaterial({color:co,size:0.08,transparent:true,opacity:0.7,blending:T.AdditiveBlending,depthWrite:false,sizeAttenuation:true})));
+const rM=new T.MeshBasicMaterial({color:co,transparent:true,opacity:0.15,side:T.DoubleSide,blending:T.AdditiveBlending,depthWrite:false});
+const rn2=new T.Mesh(new T.RingGeometry(1,1.8,32),rM);rn2.rotation.x=-Math.PI/2;rn2.position.y=0.02;g.add(rn2);
+const ir=new T.Mesh(new T.RingGeometry(0.2,0.5,24),new T.MeshBasicMaterial({color:co,transparent:true,opacity:0.25,side:T.DoubleSide,blending:T.AdditiveBlending,depthWrite:false}));
+ir.rotation.x=-Math.PI/2;ir.position.y=0.03;g.add(ir);
+const lt=new T.PointLight(col,2,8);lt.position.y=3;g.add(lt);
+g.userData.animate=t=>{bM.opacity=0.5+Math.sin(t*2)*0.15;gM.opacity=0.06+Math.sin(t*1.5)*0.03;rM.opacity=0.12+Math.sin(t*2.5)*0.05;lt.intensity=1.5+Math.sin(t*2)*0.5;ir.rotation.z=t*0.5;const p=pG.attributes.position.array;for(let i=0;i<pc;i++){p[i*3+1]+=0.015;if(p[i*3+1]>H.H)p[i*3+1]=0;}pG.attributes.position.needsUpdate=true;};
+sc.add(g);
+const hb=new T.Mesh(new T.CylinderGeometry(1.5,1.5,H.H,8),new T.MeshBasicMaterial({visible:false}));
+hb.position.set(pos.x,H.H/2,pos.z);hb.userData={type:'portal',name:label,description:'Step into the '+label+'.',interactive:true};sc.add(hb);st.ia.push(hb);}
+pillar({x:-6,z:-3},C.CGOLD,'Capital Portal');
+pillar({x:0,z:-5},C.BLUE,'Infrastructure Portal');
+pillar({x:6,z:-3},C.GREEN,'Growth Portal');
+function character(){
+const g=new T.Group();g.position.set(0,0,6);
+const nv=new T.MeshStandardMaterial({color:0x1a2744,roughness:0.65});
+const wh=new T.MeshStandardMaterial({color:0xF0EDE8,roughness:0.8});
+const sk=new T.MeshStandardMaterial({color:0xC8A882,roughness:0.55});
+const gd=new T.MeshStandardMaterial({color:0xD4A84B,roughness:0.2,metalness:0.95});
+const hr=new T.MeshStandardMaterial({color:0x0f0a05,roughness:0.85});
+const gl=new T.MeshStandardMaterial({color:0x1a1008,roughness:0.1,metalness:0.6});
+const pn=new T.MeshStandardMaterial({color:0x151F33,roughness:0.7});
+const to=mk(new T.CylinderGeometry(0.28,0.32,0.85,16),nv);to.position.y=1.15;to.castShadow=true;g.add(to);
+const tn=mk(new T.CylinderGeometry(0.2,0.24,0.35,12),wh);tn.position.set(0,1.55,0.02);g.add(tn);
+const co=mk(new T.CylinderGeometry(0.11,0.12,0.1,12),wh);co.position.y=1.7;g.add(co);
+const sh=mk(new T.CylinderGeometry(0.36,0.28,0.12,16),nv);sh.position.y=1.6;sh.castShadow=true;g.add(sh);
+const nk=mk(new T.CylinderGeometry(0.08,0.1,0.08,10),sk);nk.position.y=1.76;g.add(nk);
+const hd=mk(new T.SphereGeometry(0.19,20,14),sk);hd.position.y=1.92;hd.castShadow=true;g.add(hd);
+const ha=mk(new T.SphereGeometry(0.2,20,10,0,6.28,0,Math.PI*0.55),hr);ha.position.y=1.94;g.add(ha);
+const hs=mk(new T.BoxGeometry(0.42,0.12,0.2),hr);hs.position.set(0,1.92,-0.02);g.add(hs);
+const lg=new T.CircleGeometry(0.055,12);
+const ll=mk(lg,gl);ll.position.set(-0.07,1.93,0.185);g.add(ll);
+const lr=mk(lg,gl);lr.position.set(0.07,1.93,0.185);g.add(lr);
+const ch=mk(new T.TorusGeometry(0.14,0.012,8,24),gd);ch.position.set(0,1.58,0.1);ch.rotation.x=Math.PI*0.15;g.add(ch);
+const lG=new T.CylinderGeometry(0.1,0.09,0.8,10);
+const ll2=mk(lG,pn);ll2.position.set(-0.13,0.4,0);g.add(ll2);
+const rl=mk(lG,pn);rl.position.set(0.13,0.4,0);g.add(rl);
+const aG=new T.CylinderGeometry(0.06,0.07,0.65,10);
+const la=mk(aG,nv);la.position.set(-0.4,1.25,0);la.rotation.z=0.1;g.add(la);
+const ra=mk(aG,nv);ra.position.set(0.4,1.25,0);ra.rotation.z=-0.1;g.add(ra);
+const hG=new T.SphereGeometry(0.045,8,6);
+const lh=mk(hG,sk);lh.position.set(-0.42,0.92,0);g.add(lh);
+const rh=mk(hG,sk);rh.position.set(0.42,0.92,0);g.add(rh);
+const sG=new T.BoxGeometry(0.12,0.08,0.24),sM=new T.MeshStandardMaterial({color:0x0a0a0a,roughness:0.35,metalness:0.25});
+const ls=mk(sG,sM);ls.position.set(-0.13,0.04,0.03);g.add(ls);
+const rs=mk(sG,sM);rs.position.set(0.13,0.04,0.03);g.add(rs);
+const w=mk(new T.TorusGeometry(0.04,0.012,8,16),gd);w.position.set(-0.42,0.96,0);w.rotation.y=Math.PI/2;g.add(w);
+const sd=mk(new T.CircleGeometry(0.45,20),new T.MeshBasicMaterial({color:0,transparent:true,opacity:0.35,depthWrite:false}));
+sd.rotation.x=-Math.PI/2;sd.position.y=0.01;g.add(sd);
+sc.add(g);return g;}
+st.ch=character();oc.target.set(0,1.2,6);
+const rc=new T.Raycaster(),ctr=new T.Vector2(0,0);let hl=null;
+const pr=document.getElementById('prompt'),ip=document.getElementById('ipanel'),it=document.getElementById('ititle'),ib=document.getElementById('ibody'),ic=document.getElementById('icta');
+document.getElementById('closep').onclick=()=>ip.classList.remove('vis');
+function chkI(){if(!st.on)return;rc.setFromCamera(ctr,cam);rc.far=15;const h=rc.intersectObjects(st.ia,true);
+if(h.length>0){const o=h[0].object;if(o.userData.interactive&&hl!==o){hl=o;pr.textContent=o.userData.name+' \u2014 Press E or Click';pr.classList.add('vis');}}
+else if(hl){hl=null;pr.classList.remove('vis');}
+if(st.ch)st.ia.forEach(o=>{if(o.userData.type==='portal'){const d=st.ch.position.distanceTo(new T.Vector3(o.position.x,st.ch.position.y,o.position.z));if(d<2){pr.textContent=o.userData.name+' \u2014 Press E';pr.classList.add('vis');hl=o;}}});}
+function act(){if(!hl)return;const d=hl.userData;
+if(d.type==='portal'){const f=document.createElement('div');f.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none';document.body.appendChild(f);requestAnimationFrame(()=>{f.style.opacity='0.8';setTimeout(()=>{f.style.opacity='0';const l=document.getElementById('rlabel');l.textContent=d.name.toUpperCase();l.classList.add('vis');setTimeout(()=>l.classList.remove('vis'),3000);setTimeout(()=>f.remove(),500);},400);});return;}
+it.textContent=d.name;ib.textContent=d.description||'';
+if(d.type==='phonebooth'){ic.textContent='Open Contact Form';ic.style.display='inline-block';}
+else if(d.type==='painting'){ic.textContent='Inquire About This Piece';ic.style.display='inline-block';}
+else ic.style.display='none';
+ip.classList.add('vis');}
+addEventListener('click',act);addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e')act();if(e.key==='Escape')ip.classList.remove('vis');});
+let lp=0;const lb=document.getElementById('loading-bar'),lpc=document.getElementById('loading-percent'),ls2=document.getElementById('loading-screen'),so=document.getElementById('start-overlay');
+const iv=setInterval(()=>{lp+=Math.random()*15+5;if(lp>=100){lp=100;clearInterval(iv);setTimeout(()=>{ls2.classList.add('hidden');so.classList.add('show');},500);}lb.style.width=lp+'%';lpc.textContent=Math.floor(lp);},140);
+so.addEventListener('click',()=>{so.classList.remove('show');so.style.display='none';oc.enabled=true;document.getElementById('crosshair').classList.add('show');const l=document.getElementById('rlabel');l.textContent='MAIN HALL';l.classList.add('vis');setTimeout(()=>l.classList.remove('vis'),3000);st.on=true;});
+addEventListener('keydown',e=>{st.k[e.key.toLowerCase()]=true;});addEventListener('keyup',e=>{st.k[e.key.toLowerCase()]=false;});
+function upd(dt){if(!st.on||!st.ch)return;const spd=P.SPD*(st.k.shift?P.SPR:1)*dt;const dir=new T.Vector3();
+const fw2=new T.Vector3();cam.getWorldDirection(fw2);fw2.y=0;fw2.normalize();
+const rt=new T.Vector3();rt.crossVectors(fw2,new T.Vector3(0,1,0)).normalize();
+if(st.k.w||st.k.arrowup)dir.add(fw2);if(st.k.s||st.k.arrowdown)dir.sub(fw2);
+if(st.k.d||st.k.arrowright)dir.add(rt);if(st.k.a||st.k.arrowleft)dir.sub(rt);
+if(dir.length()>0){dir.normalize();const np=st.ch.position.clone().add(dir.multiplyScalar(spd));
+const hw=H.W/2-P.R-0.5,hd2=H.D/2-P.R-0.5;np.x=Math.max(-hw,Math.min(hw,np.x));np.z=Math.max(-hd2,Math.min(hd2,np.z));
+st.ch.position.copy(np);const a=Math.atan2(dir.x,dir.z);st.ch.rotation.y=T.MathUtils.lerp(st.ch.rotation.y,a,0.15);
+st.ch.position.y=Math.sin(st.clk.getElapsedTime()*8)*0.03;}else{st.ch.position.y=Math.sin(st.clk.getElapsedTime()*1.5)*0.01;}
+oc.target.lerp(new T.Vector3(st.ch.position.x,st.ch.position.y+1.2,st.ch.position.z),0.1);}
+function loop(){requestAnimationFrame(loop);const dt=Math.min(st.clk.getDelta(),0.05);upd(dt);oc.update();chkI();
+sc.traverse(c=>{if(c.userData&&c.userData.animate)c.userData.animate(st.clk.getElapsedTime());});rn.render(sc,cam);}
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rn.setSize(innerWidth,innerHeight);});
+loop();
+</script>
 </body>
 </html>
