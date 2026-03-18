@@ -1,43 +1,110 @@
 import * as THREE from 'three';
+
 const raycaster = new THREE.Raycaster();
 const center = new THREE.Vector2(0, 0);
-let objs = [], camRef = null, charRef = null, curHL = null;
-const pr = document.getElementById('interaction-prompt');
-const ip = document.getElementById('info-panel');
-const it = document.getElementById('info-title');
-const ib = document.getElementById('info-body');
-const ic = document.getElementById('info-cta');
+let interactableObjects = [];
+let cameraRef = null;
+let characterRef = null;
+let currentHighlight = null;
+
+const prompt = document.getElementById('interaction-prompt');
+const infoPanel = document.getElementById('info-panel');
+const infoTitle = document.getElementById('info-title');
+const infoBody = document.getElementById('info-body');
+const infoCta = document.getElementById('info-cta');
 
 export function setupInteractions(camera, interactables, character) {
-  camRef = camera; objs = interactables; charRef = character;
+  cameraRef = camera;
+  interactableObjects = interactables;
+  characterRef = character;
+
   window.addEventListener('click', onInteract);
-  window.addEventListener('keydown', (e) => { if (e.key.toLowerCase()==='e') onInteract(); if (e.key==='Escape') closePanel(); });
-  (function checkHover() {
-    if (!camRef||!charRef) { requestAnimationFrame(checkHover); return; }
-    raycaster.setFromCamera(center, camRef); raycaster.far = 15;
-    const hits = raycaster.intersectObjects(objs, true);
-    if (hits.length > 0) { const o = findI(hits[0].object); if (o&&o.userData.interactive) { if (curHL!==o) { curHL=o; showP(o.userData); } } }
-    else { if (curHL) { curHL=null; hideP(); } }
-    if (charRef) { objs.forEach(o => { if (o.userData.type==='portal') { const d=charRef.position.distanceTo(new THREE.Vector3(o.position.x,charRef.position.y,o.position.z)); if(d<2.0) showP({name:o.userData.name,type:'portal',description:'Press E or click to enter'}); } }); }
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'e') onInteract();
+    if (e.key === 'Escape') closeInfoPanel();
+  });
+
+  function checkHover() {
+    if (!cameraRef || !characterRef) { requestAnimationFrame(checkHover); return; }
+
+    raycaster.setFromCamera(center, cameraRef);
+    raycaster.far = 15;
+    const intersects = raycaster.intersectObjects(interactableObjects, true);
+
+    if (intersects.length > 0) {
+      const obj = findInteractable(intersects[0].object);
+      if (obj && obj.userData.interactive) {
+        if (currentHighlight !== obj) { currentHighlight = obj; showPrompt(obj.userData); }
+      }
+    } else {
+      if (currentHighlight) { currentHighlight = null; hidePrompt(); }
+    }
+
+    if (characterRef) {
+      interactableObjects.forEach(obj => {
+        if (obj.userData.type === 'portal') {
+          const dist = characterRef.position.distanceTo(new THREE.Vector3(obj.position.x, characterRef.position.y, obj.position.z));
+          if (dist < 2.0) {
+            showPrompt({ name: obj.userData.name, type: 'portal', description: 'Press E or click to enter' });
+          }
+        }
+      });
+    }
+
     requestAnimationFrame(checkHover);
-  })();
+  }
+  checkHover();
 }
-function findI(o) { if (o.userData&&o.userData.interactive) return o; if (o.parent) return findI(o.parent); return null; }
+
+function findInteractable(obj) {
+  if (obj.userData && obj.userData.interactive) return obj;
+  if (obj.parent) return findInteractable(obj.parent);
+  return null;
+}
+
 function onInteract() {
-  if (!curHL) return; const d = curHL.userData;
-  if (d.type==='painting') openPanel(d.name, d.description, 'Inquire About This Piece');
-  else if (d.type==='portal') doPortal(d.targetRoom, d.name);
-  else if (d.type==='phonebooth') openPanel(d.name, d.description, 'Open Contact Form');
-  else if (d.type==='product') openPanel(d.name, d.description, d.price?'Add to Cart — $'+d.price:'View Details');
-  else if (d.name) openPanel(d.name, d.description||'');
+  if (!currentHighlight) return;
+  const d = currentHighlight.userData;
+  switch (d.type) {
+    case 'painting': openInfoPanel(d.name, d.description, 'Inquire About This Piece'); break;
+    case 'portal': triggerPortalTransition(d.targetRoom, d.name); break;
+    case 'phonebooth': openInfoPanel(d.name, d.description, 'Open Contact Form'); break;
+    case 'product': openInfoPanel(d.name, d.description, d.price ? `Add to Cart — $${d.price}` : 'View Details'); break;
+    default: if (d.name) openInfoPanel(d.name, d.description || '');
+  }
 }
-function showP(d) { pr.textContent = d.name+' — Press E or Click'; pr.classList.add('visible'); }
-function hideP() { pr.classList.remove('visible'); }
-function openPanel(t, b, cta) { it.textContent=t; ib.textContent=b; if(cta){ic.textContent=cta;ic.style.display='inline-block';}else{ic.style.display='none';} ip.classList.add('visible'); }
-function closePanel() { ip.classList.remove('visible'); }
-function doPortal(room, name) {
-  const f = document.createElement('div');
-  f.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:999;opacity:0;transition:opacity 0.3s ease;pointer-events:none;';
-  document.body.appendChild(f);
-  requestAnimationFrame(()=>{f.style.opacity='0.8';setTimeout(()=>{f.style.opacity='0';const rl=document.getElementById('room-label');rl.textContent=name.toUpperCase();rl.classList.add('visible');setTimeout(()=>rl.classList.remove('visible'),3000);console.log('Portal:',room);setTimeout(()=>f.remove(),500);},400);});
+
+function showPrompt(data) {
+  prompt.textContent = `${data.name} — Press E or Click`;
+  prompt.classList.add('visible');
+}
+
+function hidePrompt() { prompt.classList.remove('visible'); }
+
+function openInfoPanel(title, body, ctaText) {
+  infoTitle.textContent = title;
+  infoBody.textContent = body;
+  if (ctaText) { infoCta.textContent = ctaText; infoCta.style.display = 'inline-block'; }
+  else { infoCta.style.display = 'none'; }
+  infoPanel.classList.add('visible');
+}
+
+function closeInfoPanel() { infoPanel.classList.remove('visible'); }
+
+function triggerPortalTransition(targetRoom, portalName) {
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:999;opacity:0;transition:opacity 0.3s ease;pointer-events:none;';
+  document.body.appendChild(flash);
+  requestAnimationFrame(() => {
+    flash.style.opacity = '0.8';
+    setTimeout(() => {
+      flash.style.opacity = '0';
+      const roomLabel = document.getElementById('room-label');
+      roomLabel.textContent = portalName.toUpperCase();
+      roomLabel.classList.add('visible');
+      setTimeout(() => roomLabel.classList.remove('visible'), 3000);
+      console.log(`Portal transition to: ${targetRoom}`);
+      setTimeout(() => flash.remove(), 500);
+    }, 400);
+  });
 }
