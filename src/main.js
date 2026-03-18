@@ -1,14 +1,217 @@
-import*as T from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{COLORS,MAIN_HALL_DIMS as D,PLAYER as P,PILLAR_POSITIONS as PP,ROOMS}from'./utils/constants.js';import{createMainHall}from'./rooms/MainHall.js';import{createLightPillar}from'./effects/LightPillar.js';import{createCharacter}from'./character/Character.js';import{setupInteractions}from'./controls/Interactions.js';
-const s={room:ROOMS.MAIN_HALL,go:false,keys:{w:0,a:0,s:0,d:0,shift:0},ch:null,ia:[],ck:new T.Clock()};
-const sc=new T.Scene();sc.background=new T.Color(COLORS.DEEP_BLACK);sc.fog=new T.FogExp2(COLORS.DEEP_BLACK,.018);
-const cam=new T.PerspectiveCamera(55,innerWidth/innerHeight,.1,200);cam.position.set(0,P.CAMERA_OFFSET.y,P.CAMERA_OFFSET.z+5);
-const rr=new T.WebGLRenderer({antialias:1,powerPreference:'high-performance'});rr.setSize(innerWidth,innerHeight);rr.setPixelRatio(Math.min(devicePixelRatio,2));rr.shadowMap.enabled=1;rr.shadowMap.type=T.PCFSoftShadowMap;rr.toneMapping=T.ACESFilmicToneMapping;rr.toneMappingExposure=1.2;rr.outputColorSpace=T.SRGBColorSpace;document.getElementById('app').appendChild(rr.domElement);
-const oc=new OrbitControls(cam,rr.domElement);oc.enableDamping=1;oc.dampingFactor=.08;oc.minDistance=3;oc.maxDistance=12;oc.maxPolarAngle=Math.PI*.48;oc.minPolarAngle=Math.PI*.15;oc.enablePan=0;oc.enabled=0;
-function light(){sc.add(new T.AmbientLight(0x1a1a2e,.4));const k=new T.DirectionalLight(0xFFF4E0,.8);k.position.set(5,12,3);k.castShadow=1;k.shadow.mapSize.set(2048,2048);k.shadow.camera.near=.5;k.shadow.camera.far=50;k.shadow.camera.left=-20;k.shadow.camera.right=20;k.shadow.camera.top=15;k.shadow.camera.bottom=-15;k.shadow.bias=-.0001;sc.add(k);sc.add(Object.assign(new T.DirectionalLight(0x8899BB,.3),{position:new T.Vector3(-5,8,-3)}));sc.add(Object.assign(new T.PointLight(0xC5A55A,.6,20),{position:new T.Vector3(-12,6,-8)}));sc.add(Object.assign(new T.PointLight(0x4466AA,.4,20),{position:new T.Vector3(12,6,8)}));for(let i=0;i<4;i++){const sp=new T.SpotLight(0xFFF0D4,1.5,15,Math.PI/8,.5,1.5);sp.position.set(-10+i*6,7,-9.5);sp.target.position.set(-10+i*6,1.5,-9.8);sp.castShadow=1;sp.shadow.mapSize.set(512,512);sc.add(sp);sc.add(sp.target);}}
-let pg=0;function sl(){const iv=setInterval(()=>{pg+=Math.random()*12+3;if(pg>=100){pg=100;clearInterval(iv);setTimeout(()=>{document.getElementById('loading-screen').classList.add('hidden');document.getElementById('start-overlay').classList.remove('hidden');},600);}document.getElementById('loading-bar').style.width=pg+'%';document.getElementById('loading-percent').textContent=Math.floor(pg);},180);}
-function init(){light();const h=createMainHall(sc);s.ia.push(...h.interactables);[['CAPITAL',COLORS.CAPITAL_GOLD,'Capital Portal'],['INFRASTRUCTURE',COLORS.INFRA_BLUE,'Infrastructure Portal'],['GROWTH',COLORS.GROWTH_GREEN,'Growth Portal']].forEach(([k,c,l])=>{const p=createLightPillar(sc,PP[k],c,l,ROOMS[k]);s.ia.push(p.hitbox);});s.ch=createCharacter(sc);oc.target.copy(s.ch.position);oc.target.y=P.CAMERA_LOOK_OFFSET.y;setupInteractions(cam,s.ia,s.ch);sl();}
-document.getElementById('start-overlay').onclick=()=>{document.getElementById('start-overlay').classList.add('hidden');oc.enabled=1;document.getElementById('crosshair').style.display='block';const rl=document.getElementById('room-label');rl.textContent='MAIN HALL';rl.classList.add('visible');setTimeout(()=>rl.classList.remove('visible'),3e3);s.go=1;};
-onkeydown=e=>{const k=e.key.toLowerCase();if(k in s.keys)s.keys[k]=1;if(k==='shift')s.keys.shift=1;};onkeyup=e=>{const k=e.key.toLowerCase();if(k in s.keys)s.keys[k]=0;if(k==='shift')s.keys.shift=0;};
-function mv(dt){if(!s.go||!s.ch)return;const sp=P.SPEED*(s.keys.shift?P.SPRINT_MULTIPLIER:1)*dt,dir=new T.Vector3(),fw=new T.Vector3();cam.getWorldDirection(fw);fw.y=0;fw.normalize();const rt=new T.Vector3();rt.crossVectors(fw,new T.Vector3(0,1,0)).normalize();if(s.keys.w)dir.add(fw);if(s.keys.s)dir.sub(fw);if(s.keys.d)dir.add(rt);if(s.keys.a)dir.sub(rt);if(dir.length()>0){dir.normalize();const n=s.ch.position.clone().add(dir.multiplyScalar(sp)),hw=D.WIDTH/2-P.RADIUS-.5,hd=D.DEPTH/2-P.RADIUS-.5;n.x=Math.max(-hw,Math.min(hw,n.x));n.z=Math.max(-hd,Math.min(hd,n.z));s.ch.position.copy(n);s.ch.rotation.y=T.MathUtils.lerp(s.ch.rotation.y,Math.atan2(dir.x,dir.z),.15);s.ch.position.y=Math.sin(s.ck.getElapsedTime()*8)*.03;}else s.ch.position.y=Math.sin(s.ck.getElapsedTime()*1.5)*.01;oc.target.lerp(new T.Vector3(s.ch.position.x,s.ch.position.y+P.CAMERA_LOOK_OFFSET.y,s.ch.position.z),.1);}
-!function a(){requestAnimationFrame(a);const dt=Math.min(s.ck.getDelta(),.05);mv(dt);oc.update();sc.traverse(c=>{if(c.userData?.animate)c.userData.animate(s.ck.getElapsedTime());});rr.render(sc,cam);}();
-onresize=()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rr.setSize(innerWidth,innerHeight);};init();
+// SET UNIVERSE — Main Entry Point
+// Chris Marchese Digital World — Built by WAVMVMT x Claude
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { COLORS, MAIN_HALL_DIMS, PLAYER, PILLAR_POSITIONS, ROOMS } from './utils/constants.js';
+import { createMainHall } from './rooms/MainHall.js';
+import { createLightPillar } from './effects/LightPillar.js';
+import { createCharacter } from './character/Character.js';
+import { setupInteractions } from './controls/Interactions.js';
+
+const state = {
+  currentRoom: ROOMS.MAIN_HALL,
+  isLoaded: false,
+  isStarted: false,
+  keys: { w: false, a: false, s: false, d: false, shift: false },
+  character: null,
+  interactables: [],
+  clock: new THREE.Clock()
+};
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(COLORS.DEEP_BLACK);
+scene.fog = new THREE.FogExp2(COLORS.DEEP_BLACK, 0.018);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, PLAYER.CAMERA_OFFSET.y, PLAYER.CAMERA_OFFSET.z + 5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.getElementById('app').appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 3;
+controls.maxDistance = 12;
+controls.maxPolarAngle = Math.PI * 0.48;
+controls.minPolarAngle = Math.PI * 0.15;
+controls.enablePan = false;
+controls.enabled = false;
+
+function setupLighting() {
+  scene.add(new THREE.AmbientLight(0x1a1a2e, 0.4));
+
+  const keyLight = new THREE.DirectionalLight(0xFFF4E0, 0.8);
+  keyLight.position.set(5, 12, 3);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.camera.near = 0.5;
+  keyLight.shadow.camera.far = 50;
+  keyLight.shadow.camera.left = -20;
+  keyLight.shadow.camera.right = 20;
+  keyLight.shadow.camera.top = 15;
+  keyLight.shadow.camera.bottom = -15;
+  keyLight.shadow.bias = -0.0001;
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0x8899BB, 0.3);
+  fillLight.position.set(-5, 8, -3);
+  scene.add(fillLight);
+
+  scene.add(Object.assign(new THREE.PointLight(0xC5A55A, 0.6, 20), { position: new THREE.Vector3(-12, 6, -8) }));
+  scene.add(Object.assign(new THREE.PointLight(0x4466AA, 0.4, 20), { position: new THREE.Vector3(12, 6, 8) }));
+
+  for (let i = 0; i < 4; i++) {
+    const spot = new THREE.SpotLight(0xFFF0D4, 1.5, 15, Math.PI / 8, 0.5, 1.5);
+    spot.position.set(-10 + i * 6, 7, -9.5);
+    spot.target.position.set(-10 + i * 6, 1.5, -9.8);
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(512, 512);
+    scene.add(spot);
+    scene.add(spot.target);
+  }
+}
+
+const loadingBar = document.getElementById('loading-bar');
+const loadingPercent = document.getElementById('loading-percent');
+const loadingScreen = document.getElementById('loading-screen');
+const startOverlay = document.getElementById('start-overlay');
+
+let loadProgress = 0;
+const simulateLoading = () => {
+  const interval = setInterval(() => {
+    loadProgress += Math.random() * 12 + 3;
+    if (loadProgress >= 100) {
+      loadProgress = 100;
+      clearInterval(interval);
+      setTimeout(() => {
+        loadingScreen.classList.add('hidden');
+        startOverlay.classList.remove('hidden');
+        state.isLoaded = true;
+      }, 600);
+    }
+    loadingBar.style.width = loadProgress + '%';
+    loadingPercent.textContent = Math.floor(loadProgress);
+  }, 180);
+};
+
+async function init() {
+  setupLighting();
+
+  const hallGroup = createMainHall(scene);
+  state.interactables.push(...hallGroup.interactables);
+
+  const capitalPillar = createLightPillar(scene, PILLAR_POSITIONS.CAPITAL, COLORS.CAPITAL_GOLD, 'Capital Portal', ROOMS.CAPITAL);
+  const infraPillar = createLightPillar(scene, PILLAR_POSITIONS.INFRASTRUCTURE, COLORS.INFRA_BLUE, 'Infrastructure Portal', ROOMS.INFRASTRUCTURE);
+  const growthPillar = createLightPillar(scene, PILLAR_POSITIONS.GROWTH, COLORS.GROWTH_GREEN, 'Growth Portal', ROOMS.GROWTH);
+  state.interactables.push(capitalPillar.hitbox, infraPillar.hitbox, growthPillar.hitbox);
+
+  state.character = createCharacter(scene);
+  controls.target.copy(state.character.position);
+  controls.target.y = PLAYER.CAMERA_LOOK_OFFSET.y;
+
+  setupInteractions(camera, state.interactables, state.character);
+  simulateLoading();
+}
+
+startOverlay.addEventListener('click', () => {
+  startOverlay.classList.add('hidden');
+  controls.enabled = true;
+  document.getElementById('crosshair').style.display = 'block';
+  const roomLabel = document.getElementById('room-label');
+  roomLabel.textContent = 'MAIN HALL';
+  roomLabel.classList.add('visible');
+  setTimeout(() => roomLabel.classList.remove('visible'), 3000);
+  state.isStarted = true;
+});
+
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (key in state.keys) state.keys[key] = true;
+  if (key === 'shift') state.keys.shift = true;
+});
+window.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase();
+  if (key in state.keys) state.keys[key] = false;
+  if (key === 'shift') state.keys.shift = false;
+});
+
+function updateCharacter(delta) {
+  if (!state.isStarted || !state.character) return;
+
+  const speed = PLAYER.SPEED * (state.keys.shift ? PLAYER.SPRINT_MULTIPLIER : 1) * delta;
+  const direction = new THREE.Vector3();
+
+  const cameraForward = new THREE.Vector3();
+  camera.getWorldDirection(cameraForward);
+  cameraForward.y = 0;
+  cameraForward.normalize();
+
+  const cameraRight = new THREE.Vector3();
+  cameraRight.crossVectors(cameraForward, new THREE.Vector3(0, 1, 0)).normalize();
+
+  if (state.keys.w) direction.add(cameraForward);
+  if (state.keys.s) direction.sub(cameraForward);
+  if (state.keys.d) direction.add(cameraRight);
+  if (state.keys.a) direction.sub(cameraRight);
+
+  if (direction.length() > 0) {
+    direction.normalize();
+    const newPos = state.character.position.clone().add(direction.multiplyScalar(speed));
+
+    const hw = MAIN_HALL_DIMS.WIDTH / 2 - PLAYER.RADIUS - 0.5;
+    const hd = MAIN_HALL_DIMS.DEPTH / 2 - PLAYER.RADIUS - 0.5;
+    newPos.x = Math.max(-hw, Math.min(hw, newPos.x));
+    newPos.z = Math.max(-hd, Math.min(hd, newPos.z));
+
+    state.character.position.copy(newPos);
+
+    const angle = Math.atan2(direction.x, direction.z);
+    state.character.rotation.y = THREE.MathUtils.lerp(state.character.rotation.y, angle, 0.15);
+    state.character.position.y = Math.sin(state.clock.getElapsedTime() * 8) * 0.03;
+  } else {
+    state.character.position.y = Math.sin(state.clock.getElapsedTime() * 1.5) * 0.01;
+  }
+
+  controls.target.lerp(
+    new THREE.Vector3(
+      state.character.position.x,
+      state.character.position.y + PLAYER.CAMERA_LOOK_OFFSET.y,
+      state.character.position.z
+    ),
+    0.1
+  );
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(state.clock.getDelta(), 0.05);
+
+  updateCharacter(delta);
+  controls.update();
+
+  scene.traverse((child) => {
+    if (child.userData && child.userData.animate) {
+      child.userData.animate(state.clock.getElapsedTime());
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+init();
+animate();
